@@ -1,4 +1,18 @@
-# HSDA
+<div align="center">
+<h2>HSDA: High-frequency Shuffle Data Augmentation for Bird’s-Eye-View Map Segmentation</h2>
+  
+**Calvin Glisson** · **Qiuxiao Chen**
+
+California State University, San Bernardino
+
+**WACV 2025**
+
+<img src="HSDA.png" width="75%" height="75%">
+
+With runnable code for the paper **Residual Graph Convolutional Network for Bird’s-Eye-View Semantic Segmentation** as well.
+
+</div>
+
 ## Getting Started
 #### Data Download
 Please download the [nuscenes](https://www.nuscenes.org/) dataset in `data/nuscenes` with the following files present.
