@@ -18,6 +18,6 @@ RUN pip install yapf==0.40.1 protobuf==3.8.0
 
 # Install MMDetection3D
 RUN conda clean --all
-RUN git clone https://github.com/qiuxiao-chen/test_code /mmdetection3d
+RUN git clone https://github.com/Zarhult/HSDA /mmdetection3d
 WORKDIR /mmdetection3d
 RUN pip install -r requirements.txt
