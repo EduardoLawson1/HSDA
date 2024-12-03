@@ -1,5 +1,6 @@
 <div align="center">
 <h2>HSDA: High-frequency Shuffle Data Augmentation for Bird’s-Eye-View Map Segmentation</h2>
+<h2> &RGCN: Residual Graph Convolutional Network for Bird’'s-Eye-View Semantic Segmentation</h2>
   
 **Calvin Glisson** · **Qiuxiao Chen**
 
