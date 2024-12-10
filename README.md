@@ -1,6 +1,6 @@
 <div align="center">
-<h2>HSDA: High-frequency Shuffle Data Augmentation for Bird’s-Eye-View Map Segmentation</h2>
-<h2> &RGCN: Residual Graph Convolutional Network for Bird’'s-Eye-View Semantic Segmentation</h2>
+<h2><a href="https://arxiv.org/pdf/2412.06127">HSDA: High-frequency Shuffle Data Augmentation for Bird’s-Eye-View Map Segmentation</a></h2>
+<h2>& <a href="https://openaccess.thecvf.com/content/WACV2024/papers/Chen_Residual_Graph_Convolutional_Network_for_Birds-Eye-View_Semantic_Segmentation_WACV_2024_paper.pdf">RGCN: Residual Graph Convolutional Network for Bird’s-Eye-View Semantic Segmentation</a></h2>
   
 **Calvin Glisson** · **Qiuxiao Chen**
 
@@ -10,7 +10,7 @@ California State University, San Bernardino
 
 <img src="HSDA.png" width="75%" height="75%">
 
-With runnable code for the paper **Residual Graph Convolutional Network for Bird’s-Eye-View Semantic Segmentation** as well.
+This repo provides runnable code for RGCN and the new RGCN+HSDA method.
 
 </div>
 
