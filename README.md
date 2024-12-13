@@ -2,7 +2,7 @@
 <h2><a href="https://arxiv.org/pdf/2412.06127">HSDA: High-frequency Shuffle Data Augmentation for Bird’s-Eye-View Map Segmentation</a></h2>
 <h2>& <a href="https://openaccess.thecvf.com/content/WACV2024/papers/Chen_Residual_Graph_Convolutional_Network_for_Birds-Eye-View_Semantic_Segmentation_WACV_2024_paper.pdf">RGCN: Residual Graph Convolutional Network for Bird’s-Eye-View Semantic Segmentation</a></h2>
   
-**Calvin Glisson** · **Qiuxiao Chen**
+**<a href="https://scholar.google.com/citations?user=G4l7X74AAAAJ&hl=en&oi=sra">Calvin Glisson</a>** · **<a href="https://scholar.google.com/citations?user=R67gBxQAAAAJ&hl=en&oi=sra">Qiuxiao Chen</a>**
 
 California State University, San Bernardino
 
