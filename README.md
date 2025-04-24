@@ -70,6 +70,13 @@ python test.py configs/bevdet_hsda/bevdet-multi-map-aug-seg-only-6class-hsda.py 
 ## Bibtex
 If this work is helpful for your research, please consider citing the following BibTeX entry.
 ```
-(will be added after official publication is done)
+@InProceedings{Glisson_2025_WACV,
+    author    = {Glisson, Calvin and Chen, Qiuxiao},
+    title     = {HSDA: High-Frequency Shuffle Data Augmentation for Bird's-Eye-View Map Segmentation},
+    booktitle = {Proceedings of the Winter Conference on Applications of Computer Vision (WACV)},
+    month     = {February},
+    year      = {2025},
+    pages     = {8816-8825}
+}
 ```
 
