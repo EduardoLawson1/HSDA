@@ -66,6 +66,7 @@ python test.py $config $pth --eval=bboxmap
 # Example: test baseline+HSDA after training it
 python test.py configs/bevdet_hsda/bevdet-multi-map-aug-seg-only-6class-hsda.py work_dirs/bevdet-multi-map-aug-seg-only-6class-hsda/epoch_20.pth --eval=bboxmap
 ```
+Our pretrained pth file can be downloaded for testing [here](https://drive.google.com/file/d/1AvZL_ti0W-zZsiEwQSevPLpB_yK_Vpf9/view?usp=sharing).
 
 ## Bibtex
 If this work is helpful for your research, please consider citing the following BibTeX entry.
