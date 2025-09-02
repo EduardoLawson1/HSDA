@@ -43,7 +43,7 @@ grid_config={
 
 voxel_size = [0.1, 0.1, 0.2]
 
-numC_Trans=64
+numC_Trans=128
 
 model = dict(
     type='BEVDet_Multi',
@@ -86,7 +86,7 @@ model = dict(
                                 in_channels=numC_Trans*8+numC_Trans*2,
                                 out_channels=256),
     pts_bbox_head=dict(
-        type='CenterMapHead',
+        type='CenterHead',  # Mudou de CenterMapHead para CenterHead (sem mapa)
         in_channels=256,
         tasks=[
             dict(num_class=1, class_names=['car']),
@@ -96,12 +96,6 @@ model = dict(
             dict(num_class=2, class_names=['motorcycle', 'bicycle']),
             dict(num_class=2, class_names=['pedestrian', 'traffic_cone']),
         ],
-        grid_config=grid_config,
-        grid_transform={
-            'input_scope':[[-51.2, 51.2, 0.8], [-51.2, 51.2, 0.8]],
-            'output_scope':[[-50, 50, 0.5], [-50, 50, 0.5]],
-            'loss':'focal',
-        },
         common_heads=dict(
             reg=(2, 2), height=(1, 2), dim=(3, 2), rot=(2, 2), vel=(2, 2)),
         share_conv_channel=64,
@@ -116,9 +110,8 @@ model = dict(
             code_size=9),
         separate_head=dict(
             type='SeparateHead', init_bias=-2.19, final_kernel=3),
-        loss_cls=dict(type='GaussianFocalLoss', reduction='mean',loss_weight=0),
-        loss_bbox=dict(type='L1Loss', reduction='mean', loss_weight=0),
-        loss_seg_weight=10,
+        loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
+        loss_bbox=dict(type='L1Loss', reduction='mean', loss_weight=0.25),
         norm_bbox=True),
     # model training and testing settings
     train_cfg=dict(
@@ -155,7 +148,7 @@ model = dict(
 
 
 # Data
-dataset_type = 'NuScenesDatasetMap'
+dataset_type = 'NuScenesDataset'  # Mudança para compatibilidade com nuScenes mini
 data_root = 'data/nuscenes/'
 data_root_other = 'data/nuscenes-hsda/'
 file_client_args = dict(backend='disk')
@@ -172,22 +165,22 @@ train_pipeline = [
         file_client_args=file_client_args),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(
-        type='GlobalRotScaleTransMap',
+        type='GlobalRotScaleTrans',  # Mudou de GlobalRotScaleTransMap para GlobalRotScaleTrans
         rot_range=[-0.3925, 0.3925],
         scale_ratio_range=[0.95, 1.05],
         translation_std=[0, 0, 0],
         update_img2lidar=True),
     dict(
-        type='RandomFlip3DMap',
+        type='RandomFlip3D',  # Mudou de RandomFlip3DMap para RandomFlip3D
         sync_2d=False,
         flip_ratio_bev_horizontal=0.5,
         flip_ratio_bev_vertical=0.5,
         update_img2lidar=True),
-    dict(type='LoadBEVMap', is_train=True, data_config=data_config, grid_config=grid_config, dataset_root=data_root),
+    # Removido LoadBEVMap para compatibilidade com nuScenes mini
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
     dict(type='DefaultFormatBundle3D', class_names=class_names),
-    dict(type='Collect3D', keys=['img_inputs', 'gt_bboxes_3d', 'gt_labels_3d', 'gt_masks_bev'],
+    dict(type='Collect3D', keys=['img_inputs', 'gt_bboxes_3d', 'gt_labels_3d'],  # Removido 'gt_masks_bev'
          meta_keys=('filename', 'ori_shape', 'img_shape', 'lidar2img',
                             'depth2img', 'cam2img', 'pad_shape',
                             'scale_factor', 'flip', 'pcd_horizontal_flip',
@@ -207,17 +200,17 @@ test_pipeline = [
         use_dim=5,
         file_client_args=file_client_args),
     dict(
-        type='MultiScaleFlipAug3DMap',
+        type='MultiScaleFlipAug3D',  # Mudou de MultiScaleFlipAug3DMap para MultiScaleFlipAug3D
         img_scale=(1333, 800),
         pts_scale_ratio=1,
         flip=False,
         transforms=[
-            dict(type='LoadBEVMap', is_train=False, data_config=data_config, grid_config=grid_config, dataset_root=data_root),
+            # Removido LoadBEVMap para compatibilidade com nuScenes mini
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=class_names,
                 with_label=False),
-            dict(type='Collect3D', keys=['points','img_inputs', 'gt_masks_bev'])
+            dict(type='Collect3D', keys=['points','img_inputs'])  # Removido 'gt_masks_bev'
         ])
 ]
 # construct a pipeline for data and gt loading in show function
@@ -232,17 +225,17 @@ eval_pipeline = [
         use_dim=5,
         file_client_args=file_client_args),
     dict(
-        type='MultiScaleFlipAug3DMap',
+        type='MultiScaleFlipAug3D',  # Mudou de MultiScaleFlipAug3DMap para MultiScaleFlipAug3D
         img_scale=(1333, 800),
         pts_scale_ratio=1,
         flip=False,
         transforms=[
-            dict(type='LoadBEVMap', is_train=False, data_config=data_config, grid_config=grid_config, dataset_root=data_root),
+            # Removido LoadBEVMap para compatibilidade com nuScenes mini
             dict(
                 type='DefaultFormatBundle3D',
                 class_names=class_names,
                 with_label=False),
-            dict(type='Collect3D', keys=['points','img_inputs', 'gt_masks_bev'])
+            dict(type='Collect3D', keys=['points','img_inputs'])  # Removido 'gt_masks_bev'
         ])
 ]
 
@@ -254,46 +247,30 @@ input_modality = dict(
     use_external=False)
 
 data = dict(
-    samples_per_gpu=8,
-    workers_per_gpu=4,
+    samples_per_gpu=4,  # Reduzindo batch size para teste
+    workers_per_gpu=2,
     train=dict(
-        type='CBGSDatasetMixed',
-        dataset=dict(
-            type=dataset_type,
-            data_root=data_root,
-            ann_file=data_root + 'nuscenes_infos_train_bev.pkl',
-            pipeline=train_pipeline,
-            classes=class_names,
-            map_classes=grid_config['map_classes'],
-            test_mode=False,
-            use_valid_flag=True,
-            modality=input_modality,
-            # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
-            # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='LiDAR',
-            img_info_prototype='bevdet'),
-        other_dataset=dict(
-            type=dataset_type,
-            data_root=data_root_other,
-            ann_file=data_root_other + 'nuscenes_infos_train_bev.pkl',
-            pipeline=train_pipeline,
-            classes=class_names,
-            map_classes=grid_config['map_classes'],
-            test_mode=False,
-            use_valid_flag=True,
-            modality=input_modality,
-            # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
-            # and box_type_3d='Depth' in sunrgbd and scannet dataset.
-            box_type_3d='LiDAR',
-            img_info_prototype='bevdet')),
+        type=dataset_type,  # Usando dataset padrão em vez de CBGSDatasetMixed
+        data_root=data_root,
+        ann_file=data_root + 'nuscenes_infos_train.pkl',
+        pipeline=train_pipeline,
+        classes=class_names,
+        test_mode=False,
+        use_valid_flag=True,
+        modality=input_modality,
+        box_type_3d='LiDAR'),
     val=dict(type=dataset_type,
             data_root=data_root,
-            ann_file=data_root + 'nuscenes_infos_val_bev.pkl',pipeline=test_pipeline, classes=class_names, map_classes=grid_config['map_classes'],
-        modality=input_modality, img_info_prototype='bevdet'),
+            ann_file=data_root + 'nuscenes_infos_val.pkl', 
+            pipeline=test_pipeline, 
+            classes=class_names,
+            modality=input_modality),
     test=dict(type=dataset_type,
             data_root=data_root,
-            ann_file=data_root + 'nuscenes_infos_val_bev.pkl',pipeline=test_pipeline, classes=class_names, map_classes=grid_config['map_classes'],
-        modality=input_modality, img_info_prototype='bevdet'))
+            ann_file=data_root + 'nuscenes_infos_val.pkl', 
+            pipeline=test_pipeline, 
+            classes=class_names,
+            modality=input_modality))
 
 # Optimizer
 lr_config = dict(
@@ -307,4 +284,5 @@ optimizer = dict(type='AdamW', lr=2e-4, weight_decay=0.01)
 evaluation = dict(interval=20, pipeline=eval_pipeline)
 # load_from='chpt/bevdet-sttiny-pure.pth'
 # load_from='work_dirs/bevdet-multi-config/epoch_1.pth'
+load_from = 'checkpoints/epoch_20.pth'
 

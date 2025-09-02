@@ -119,8 +119,9 @@ class ViewTransformerLiftSplatShoot(BaseModule):
             _,D,H,W = offset.shape
             points[:,:,:,:,:,2] = points[:,:,:,:,:,2]+offset.view(B,N,D,H,W)
         # points = (torch.inverse(post_rots)).view(B, N, 1, 1, 1, 3, 3).matmul(points.unsqueeze(-1))
-        # adjust for 4090
-        points = (torch.inverse(post_rots.cpu()).cuda()).view(B, N, 1, 1, 1, 3, 3).matmul(points.unsqueeze(-1))
+        # adjust for 4090 - use same device as points
+        device = points.device
+        points = (torch.inverse(post_rots.to(device))).view(B, N, 1, 1, 1, 3, 3).matmul(points.unsqueeze(-1))
 
         # cam_to_ego
         points = torch.cat((points[:, :, :, :, :, :2] * points[:, :, :, :, :, 2:3],
@@ -131,8 +132,8 @@ class ViewTransformerLiftSplatShoot(BaseModule):
             points  = points - shift.view(B,N,1,1,1,3,1)
             intrins = intrins[:,:,:3,:3]
         # combine = rots.matmul(torch.inverse(intrins))
-        # adjust for 4090
-        combine = rots.matmul(torch.inverse(intrins.cpu()).cuda())
+        # adjust for 4090 - use same device as rots
+        combine = rots.matmul(torch.inverse(intrins.to(rots.device)))
         points = combine.view(B, N, 1, 1, 1, 3, 3).matmul(points).squeeze(-1)
         points += trans.view(B, N, 1, 1, 1, 3)
 

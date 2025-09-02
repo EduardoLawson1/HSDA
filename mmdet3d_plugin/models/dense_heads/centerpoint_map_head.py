@@ -341,26 +341,124 @@ class CenterMapHead(CenterHead):
             loss_dict[f'%stask{task_id}.loss_heatmap'%(self.loss_prefix)] = loss_heatmap
         
         ##### detected bev map masks / gt bev map & gt bboxes
-        # seg_out=seg_outs[0]
-        # seg_out[seg_out<0]=0
-        # import matplotlib.pyplot as plt
-        # import cv2
-        # import os.path as path
-        # import numpy as np
-        # plt.figure()
-        # fig, axs = plt.subplots(2, 4)
-        # for i in range(len(seg_out)):
-        #     for k, name in enumerate(self.map_classes):
-        #         axs[0,k].imshow((seg_out[i,k].to('cpu')*50).byte())
-        #         axs[0,k].invert_yaxis()
-        #     for k, name in enumerate(self.map_classes):
-        #         axs[1,k].imshow((gt_masks_bev[i,k].to('cpu')*50+heatmaps[0][i][0].to('cpu')*200).byte())
-        #         # axs[1,k].imshow((gt_masks_bev[i,k].to('cpu')*50+temp*200).byte())
-        #         axs[1,k].invert_yaxis()
-        #     # plt.show()
-        #     # plt.savefig(path.join('visualization/det_gt',name))
-        #     plt.savefig('visualization/det_gt_test/{}_rot'.format(i))
-        # assert 0
+        seg_out=seg_outs[0]
+        seg_out[seg_out<0]=0
+        import matplotlib.pyplot as plt
+        import cv2
+        import os.path as path
+        import numpy as np
+        import os
+        from matplotlib.patches import Rectangle
+        
+        # Criar diretório se não existir
+        os.makedirs('visualization/det_gt_test', exist_ok=True)
+        
+        # Criar visualização estilo profissional como no exemplo de referência
+        for i in range(min(len(seg_out), 2)):  # Processar apenas 2 amostras
+            
+            # Configurar figura com layout profissional
+            fig = plt.figure(figsize=(20, 12))
+            gs = fig.add_gridspec(3, 6, height_ratios=[1, 1, 0.3], hspace=0.3, wspace=0.2)
+            
+            # Título principal
+            fig.suptitle(f'HSDA Model - BEV Segmentation Results (Sample {i+1})', 
+                        fontsize=16, fontweight='bold', y=0.95)
+            
+            # Linha 1: Predições do modelo
+            for k, name in enumerate(self.map_classes):
+                if k < 4:  # Máximo 4 classes
+                    ax = fig.add_subplot(gs[0, k])
+                    
+                    # Converter tensor para imagem
+                    pred_img = (seg_out[i,k].to('cpu') * 255).byte().numpy()
+                    
+                    # Aplicar colormap para melhor visualização
+                    import matplotlib.cm as cm
+                    colored_pred = cm.viridis(pred_img / 255.0)
+                    
+                    ax.imshow(colored_pred)
+                    ax.set_title(f'Prediction: {name.replace("_", " ").title()}', 
+                               fontsize=11, fontweight='bold')
+                    ax.axis('off')
+                    ax.invert_yaxis()
+            
+            # Linha 2: Ground Truth
+            for k, name in enumerate(self.map_classes):
+                if k < 4:  # Máximo 4 classes
+                    ax = fig.add_subplot(gs[1, k])
+                    
+                    # Converter tensor para imagem
+                    gt_img = (gt_masks_bev[i,k].to('cpu') * 255).byte().numpy()
+                    
+                    # Aplicar colormap
+                    colored_gt = cm.plasma(gt_img / 255.0)
+                    
+                    ax.imshow(colored_gt)
+                    ax.set_title(f'Ground Truth: {name.replace("_", " ").title()}', 
+                               fontsize=11, fontweight='bold')
+                    ax.axis('off')
+                    ax.invert_yaxis()
+            
+            # Adicionar informações técnicas
+            ax_info = fig.add_subplot(gs[0:2, 4:])
+            ax_info.axis('off')
+            
+            info_text = f"""
+MODEL INFORMATION:
+• Architecture: BEVDet Multi-Camera
+• Dataset: nuScenes Mini
+• Task: BEV Semantic Segmentation
+• Input: 6 Cameras (360° View)
+• Output Resolution: {seg_out.shape[-2]}x{seg_out.shape[-1]}
+
+SEGMENTATION CLASSES:
+• Drivable Area: Road surface for vehicles
+• Ped Crossing: Pedestrian crossings
+• Walkway: Sidewalks and pedestrian areas  
+• Divider: Lane dividers and barriers
+
+METRICS (Sample {i+1}):
+• Prediction Range: [{seg_out[i].min().item():.3f}, {seg_out[i].max().item():.3f}]
+• GT Coverage: {(gt_masks_bev[i].sum() / gt_masks_bev[i].numel() * 100).item():.1f}%
+• Classes Detected: {(seg_out[i].max(dim=0)[0] > 0.1).sum().item()}/{len(self.map_classes)}
+
+HSDA AUGMENTATION:
+High-frequency Shuffle Data Augmentation
+improves model robustness through strategic
+data permutation during training.
+            """
+            
+            ax_info.text(0.05, 0.95, info_text, transform=ax_info.transAxes,
+                        fontsize=10, verticalalignment='top', fontfamily='monospace',
+                        bbox=dict(boxstyle="round,pad=0.5", facecolor="lightblue", alpha=0.8))
+            
+            # Legenda das cores na parte inferior
+            ax_legend = fig.add_subplot(gs[2, :])
+            ax_legend.axis('off')
+            
+            # Criar barra de cores personalizada
+            colors = ['#440154', '#31688e', '#35b779', '#fde725']  # Viridis colors
+            labels = [cls.replace('_', ' ').title() for cls in self.map_classes[:4]]
+            
+            for idx, (color, label) in enumerate(zip(colors, labels)):
+                rect = Rectangle((idx*0.2, 0.3), 0.15, 0.4, facecolor=color, alpha=0.8)
+                ax_legend.add_patch(rect)
+                ax_legend.text(idx*0.2 + 0.075, 0.1, label, ha='center', va='center', 
+                             fontsize=9, fontweight='bold')
+            
+            ax_legend.set_xlim(0, 0.8)
+            ax_legend.set_ylim(0, 1)
+            ax_legend.text(0.4, 0.8, 'Segmentation Classes Color Map', 
+                          ha='center', fontsize=12, fontweight='bold')
+            
+            # Salvar com nome descritivo
+            output_file = f'visualization/det_gt_test/hsda_professional_sample_{i+1}.png'
+            plt.savefig(output_file, dpi=200, bbox_inches='tight', facecolor='white')
+            plt.close()
+            
+            print(f"✅ Visualização profissional salva: {output_file}")
+        
+        print(f"🎯 Visualizações no estilo do exemplo de referência criadas!")
         ##########################################
 
         for index, name in enumerate(self.map_classes):

@@ -1,6 +1,6 @@
 import imp
 from .datasets import NuScenesDatasetMap
-from .datasets.pipelines import (LoadBEVMap, LoadMultiViewImageFromFiles_BEV_multi, RandomFlip3DMap, GlobalRotScaleTransMap, MultiScaleFlipAug3DMap)
+from .datasets.pipelines import (LoadBEVMap, LoadMultiViewImageFromFiles_BEV_multi, LoadMultiViewImageFromFiles_BEVDet_Fixed, RandomFlip3DMap, GlobalRotScaleTransMap, MultiScaleFlipAug3DMap)
 from .models.detectors.bevdet_multi import BEVDet_Multi
 from .models.detectors.bevdet_comb import BEVDet_Comb
 from .models.dense_heads.centerpoint_map_head import CenterMapHead, CenterGraphHead

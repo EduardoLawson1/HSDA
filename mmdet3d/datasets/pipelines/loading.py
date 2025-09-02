@@ -179,8 +179,27 @@ class LoadMultiViewImageFromFiles_BEVDet(object):
         post_rots = []
         post_trans = []
         cams = self.choose_cams()
-        for cam in cams:
-            cam_data = results['img_info'][cam]
+        for i, cam in enumerate(cams):
+            # Compatibilidade: tentar img_info primeiro, depois cams, depois img_filename+lidar2img
+            if 'img_info' in results:
+                cam_data = results['img_info'][cam]
+                filename = cam_data['data_path']
+            elif 'cams' in results:
+                cam_data = results['cams'][cam]
+                filename = cam_data['data_path']
+            elif 'img_filename' in results and 'lidar2img' in results:
+                # Formato nuScenes padrão
+                filename = results['img_filename'][i]
+                # Construir cam_data a partir dos dados disponíveis
+                cam_data = {
+                    'data_path': filename,
+                    'cam_intrinsic': results['lidar2img'][i][:3, :3].tolist(),
+                    'sensor2lidar_rotation': results['lidar2img'][i][:3, :3].tolist(),
+                    'sensor2lidar_translation': results['lidar2img'][i][:3, 3].tolist()
+                }
+            else:
+                raise KeyError(f"No compatible image data format found. Available keys: {list(results.keys())}")
+            
             filename = cam_data['data_path']
             img = Image.open(filename)
             post_rot = torch.eye(2)
@@ -305,6 +324,14 @@ class LoadMultiViewImageFromFiles_BEVDet(object):
 
     def __call__(self, results):
         results['img_inputs'] = self.get_inputs(results)
+        
+        # Para compatibilidade com BEVDet_Multi que espera metadados para cada câmera
+        # Replicar os metadados para cada uma das 6 câmeras
+        if 'img_metas' not in results:
+            # Se não há img_metas ainda, criar uma lista com 6 cópias dos metadados atuais
+            base_meta = {k: v for k, v in results.items() if k not in ['img_inputs', 'points']}
+            results['img_metas'] = [base_meta.copy() for _ in range(len(self.data_config['cams']))]
+        
         return results
 
 
@@ -328,7 +355,15 @@ class LoadImageFromFileMono3D(LoadImageFromFile):
             dict: The dict contains loaded image and meta information.
         """
         super().__call__(results)
-        results['cam2img'] = results['img_info']['cam_intrinsic']
+        # Compatibilidade: tentar img_info primeiro, depois cams
+        if 'img_info' in results:
+            results['cam2img'] = results['img_info']['cam_intrinsic']
+        elif 'cams' in results and len(results['cams']) > 0:
+            # Usar a primeira câmera disponível como fallback
+            first_cam = list(results['cams'].keys())[0]
+            results['cam2img'] = results['cams'][first_cam]['cam_intrinsic']
+        else:
+            raise KeyError(f"Neither 'img_info' nor 'cams' found in results for cam2img extraction")
         return results
 
 

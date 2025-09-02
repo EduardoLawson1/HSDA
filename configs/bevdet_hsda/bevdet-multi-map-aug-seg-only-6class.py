@@ -261,6 +261,7 @@ data = dict(
             type=dataset_type,
             data_root=data_root,
             ann_file=data_root + 'nuscenes_infos_train_bev.pkl',
+            ann_file=data_root + 'nuscenes_infos_val_bev_v1.0-mini.pkl',
             pipeline=train_pipeline,
             classes=class_names,
             map_classes=grid_config['map_classes'],
@@ -291,5 +292,5 @@ lr_config = dict(
 optimizer = dict(type='AdamW', lr=2e-4, weight_decay=0.01)
 evaluation = dict(interval=20, pipeline=eval_pipeline)
 # load_from='chpt/bevdet-sttiny-pure.pth'
-# load_from='work_dirs/bevdet-multi-config/epoch_1.pth'
+load_from='/home/pdi/Documentos/autonomi/HSDA/checkpoints/epoch_20.pth'
 

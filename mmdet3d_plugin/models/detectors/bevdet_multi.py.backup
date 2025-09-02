@@ -111,14 +111,9 @@ class BEVDet_Multi(BEVDet):
 
         num_augs = len(img_inputs)
         if num_augs != len(img_metas):
-            # HSDA FIX: Replicar metadados se necessário para compatibilidade
-            if len(img_metas) == 1 and num_augs > 1:
-                print(f"[HSDA] Replicando metadados únicos para {num_augs} augmentações")
-                img_metas = img_metas * num_augs
-            else:
-                raise ValueError(
-                    'num of augmentations ({}) != num of image meta ({})'.format(
-                        len(img_inputs), len(img_metas)))
+            raise ValueError(
+                'num of augmentations ({}) != num of image meta ({})'.format(
+                    len(img_inputs), len(img_metas)))
 
         if not isinstance(img_inputs[0][0],list):
             img_inputs = [img_inputs] if img_inputs is None else img_inputs

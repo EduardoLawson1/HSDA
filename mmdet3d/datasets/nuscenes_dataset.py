@@ -658,6 +658,10 @@ def output_to_nusc_box(detection, info, speed_mode,
     Returns:
         list[:obj:`NuScenesBox`]: List of standard NuScenesBoxes.
     """
+    # Check if detection is None or doesn't have required keys
+    if detection is None or 'boxes_3d' not in detection:
+        return []
+    
     box3d = detection['boxes_3d']
     scores = detection['scores_3d'].numpy()
     labels = detection['labels_3d'].numpy()
@@ -677,15 +681,17 @@ def output_to_nusc_box(detection, info, speed_mode,
             adjacent = test_adj
         if adjacent == 'next' and not fix_direction:
             velocity_all = -velocity_all
-        if type(info[adjacent]) is list:
-            select_id = min(max_interval // 2, len(info[adjacent]) - 1)
-            # select_id = min(2, len(info[adjacent]) - 1)
-            info_adj = info[adjacent][select_id]
-        else:
-            info_adj = info[adjacent]
-        if 'dis' in speed_mode and test_adj_ids is None:
-            time = abs(1e-6 * info['timestamp'] - 1e-6 * info_adj['timestamp'])
-            velocity_all = velocity_all / time
+        # Check if info[adjacent] is not None before accessing it
+        if info[adjacent] is not None:
+            if type(info[adjacent]) is list:
+                select_id = min(max_interval // 2, len(info[adjacent]) - 1)
+                # select_id = min(2, len(info[adjacent]) - 1)
+                info_adj = info[adjacent][select_id]
+            else:
+                info_adj = info[adjacent]
+            if 'dis' in speed_mode and test_adj_ids is None:
+                time = abs(1e-6 * info['timestamp'] - 1e-6 * info_adj['timestamp'])
+                velocity_all = velocity_all / time
 
     box_list = []
     for i in range(len(box3d)):

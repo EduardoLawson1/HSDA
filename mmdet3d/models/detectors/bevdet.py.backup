@@ -20,16 +20,7 @@ class BEVDet(CenterPoint):
 
     def image_encoder(self,img):
         imgs = img
-        print(f"[HSDA DEBUG] img shape: {imgs.shape}, type: {type(imgs)}")
-        if len(imgs.shape) == 4:
-            # Esperamos [N, C, H, W] mas precisamos [B, N, C, H, W]
-            # Vamos assumir batch=1 e reorganizar
-            N, C, imH, imW = imgs.shape
-            print(f"[HSDA DEBUG] Reorganizando de [N={N}, C={C}, H={imH}, W={imW}] para [B=1, N={N}, C={C}, H={imH}, W={imW}]")
-            imgs = imgs.unsqueeze(0)  # Adiciona dimensão de batch
-            B = 1
-        else:
-            B, N, C, imH, imW = imgs.shape
+        B, N, C, imH, imW = imgs.shape
         imgs = imgs.view(B * N, C, imH, imW)
         x = self.img_backbone(imgs)
         if self.with_img_neck:
@@ -45,19 +36,8 @@ class BEVDet(CenterPoint):
 
     def extract_img_feat(self, img, img_metas):
         """Extract features of images."""
-        print(f"[HSDA DEBUG] extract_img_feat - img type: {type(img)}")
-        print(f"[HSDA DEBUG] extract_img_feat - img length/shape: {len(img) if isinstance(img, (list, tuple)) else img.shape}")
-        if isinstance(img, (list, tuple)):
-            print(f"[HSDA DEBUG] img é lista/tupla com {len(img)} elementos")
-            for i, item in enumerate(img):
-                print(f"[HSDA DEBUG] img[{i}] type: {type(item)}, shape: {item.shape if hasattr(item, 'shape') else 'no shape'}")
-            x = self.image_encoder(img[0])
-            x = self.img_view_transformer([x] + img[1:])
-        else:
-            print(f"[HSDA DEBUG] img é tensor direto: {img.shape}")
-            # img é diretamente um tensor - isso não deveria acontecer no BEVDet
-            x = self.image_encoder(img)
-            x = self.img_view_transformer([x])
+        x = self.image_encoder(img[0])
+        x = self.img_view_transformer([x] + img[1:])
         x = self.bev_encoder(x)
         return [x]
 
@@ -131,44 +111,16 @@ class BEVDet(CenterPoint):
                 raise TypeError('{} must be a list, but got {}'.format(
                     name, type(var)))
 
-        # HSDA DEBUG: Verificar estrutura dos img_inputs
-        print(f"[HSDA DEBUG] img_inputs type: {type(img_inputs)}")
-        print(f"[HSDA DEBUG] img_inputs length: {len(img_inputs) if isinstance(img_inputs, (list, tuple)) else 'not list'}")
-        if isinstance(img_inputs, (list, tuple)):
-            for i, item in enumerate(img_inputs):
-                if isinstance(item, torch.Tensor):
-                    print(f"[HSDA DEBUG] img_inputs[{i}] is tensor with shape: {item.shape}")
-                else:
-                    print(f"[HSDA DEBUG] img_inputs[{i}] type: {type(item)}")
-
-        # HSDA FIX: img_inputs é uma lista com os 6 parâmetros necessários, não augmentações múltiplas
-        # Verificar se isso é realmente Test Time Augmentation ou apenas os parâmetros do BEVDet
-        if isinstance(img_inputs, (list, tuple)) and len(img_inputs) == 6 and all(isinstance(x, torch.Tensor) for x in img_inputs):
-            # Esta é a estrutura normal do BEVDet: (imgs, rots, trans, intrins, post_rots, post_trans)
-            print("[HSDA] Detectado estrutura normal BEVDet com 6 parâmetros")
-            num_augs = 1
-            # img_inputs já é a tupla correta para passar para simple_test
-        else:
-            # Esta seria realmente Test Time Augmentation
-            num_augs = len(img_inputs)
+        num_augs = len(img_inputs)
         if num_augs != len(img_metas):
-            # HSDA FIX: Replicar metadados se necessário para compatibilidade
-            if len(img_metas) == 1 and num_augs > 1:
-                print(f"[HSDA] Replicando metadados únicos para {num_augs} augmentações")
-                img_metas = img_metas * num_augs
-            else:
-                raise ValueError(
-                    'num of augmentations ({}) != num of image meta ({})'.format(
-                        len(img_inputs), len(img_metas)))
+            raise ValueError(
+                'num of augmentations ({}) != num of image meta ({})'.format(
+                    len(img_inputs), len(img_metas)))
 
         if not isinstance(img_inputs[0][0],list):
-            img_inputs_for_test = [img_inputs] if img_inputs is None else img_inputs
+            img_inputs = [img_inputs] if img_inputs is None else img_inputs
             points = [points] if points is None else points
-            # HSDA FIX: Se num_augs == 1, img_inputs já é a tupla correta
-            if num_augs == 1:
-                return self.simple_test(points[0], img_metas[0], img_inputs, **kwargs)
-            else:
-                return self.simple_test(points[0], img_metas[0], img_inputs[0], **kwargs)
+            return self.simple_test(points[0], img_metas[0], img_inputs[0], **kwargs)
         else:
             return self.aug_test(None, img_metas[0], img_inputs[0], **kwargs)
 
