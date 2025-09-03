@@ -1,0 +1,20 @@
+{
+  "segmentation_classes": [
+    "drivable_area",
+    "ped_crossing",
+    "walkway",
+    "stop_line",
+    "carpark_area",
+    "divider"
+  ],
+  "miou_per_class": {
+    "drivable_area": 0.85,
+    "ped_crossing": 0.42,
+    "walkway": 0.38,
+    "stop_line": 0.28,
+    "carpark_area": 0.45,
+    "divider": 0.52
+  },
+  "mean_miou": 0.48333333333333334,
+  "note": "M\u00e9tricas simuladas baseadas em modelos BEV similares. Para m\u00e9tricas reais, execute o teste completo com GPU."
+}
